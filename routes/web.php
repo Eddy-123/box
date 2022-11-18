@@ -1,21 +1,38 @@
 <?php
 
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\HomeController;
-use App\Http\Controllers\PostController;
-use Illuminate\Http\Request;
+use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', [HomeController::class, 'home'])->name('home');
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register web routes for your application. These
+| routes are loaded by the RouteServiceProvider within a group which
+| contains the "web" middleware group. Now create something great!
+|
+*/
 
-Route::get('/about', [HomeController::class, 'about'])->name('about');
+Route::get('/', function () {
+    return view('welcome');
+});
 
-Route::resource('posts', PostController::class)->except([
-    'index',
-])->middleware('auth');
+Route::get('/dashboard', function () {
+    return view('dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard');
 
-Route::match(['get', 'post'], '/register', [AuthController::class, 'register'])->name('register')->middleware('guest');
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
 
-Route::match(['get', 'post'], '/login', [AuthController::class, 'login'])->name('login')->middleware('guest');
+require __DIR__.'/auth.php';
 
-Route::get('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
+Route::prefix('/admin')->group(function() {
+    Route::match(['get', 'post'], 'login', [AdminController::class, 'login']);
+
+    Route::get('dashboard', [AdminController::class, 'dashboard']);
+});
